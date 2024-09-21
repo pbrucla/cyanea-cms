@@ -1,0 +1,44 @@
+.eventsEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  padding-bottom: 1.4rem;
+  padding-right: 1.4rem;
+  flex-grow: 1;
+  max-height: calc(100vh - 80px - 48px);
+  overflow-y: scroll;
+}
+
+article.event > div {
+  padding: 1.4rem 16px 1.4rem 1.4rem;
+  border-radius: 16px !important;
+  background-color: #24292e;
+  line-height: 1.4;
+}
+
+.typeChips {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  margin-top: 4px;
+  gap: 1.4rem 8px;
+
+  & > button {
+    width: 32px;
+    height: 32px;
+    transform: translateX(-8px);
+    padding-block: 0;
+    color: rgba(255, 255, 255, 0.8);
+  }
+}
+
+.dates {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.addButton:first-child {
+  margin-top: 1.4rem;
+}

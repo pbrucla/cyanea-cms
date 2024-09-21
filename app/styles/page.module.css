@@ -1,0 +1,26 @@
+.sneeze {
+  display: block;
+  width: min(80%, 500px);
+  height: 80%;
+  object-fit: contain;
+  margin: 0 auto;
+
+  &:has(~ .error) {
+    height: calc(80% - 4rem);
+  }
+}
+
+.error {
+  margin: 1rem auto;
+  min-height: 2rem;
+  text-align: center;
+  color: var(--flag-pink);
+}
+
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin: 0 auto;
+}

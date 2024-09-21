@@ -1,0 +1,13 @@
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+
+  .divergent {
+    color: var(--mui-theme-error);
+
+    .probably {
+      font-family: var(--ntr), sans-serif;
+    }
+  }
+}

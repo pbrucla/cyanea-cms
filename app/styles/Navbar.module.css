@@ -1,0 +1,45 @@
+.navbar {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: space-between;
+  min-width: 100vw;
+  width: max-content;
+  height: 80px;
+  padding: 19px 15px 18px 16px;
+  
+  background-color: var(--soul-dark);
+  box-shadow: 0px 1px 15px rgba(0, 0, 0, 0.3);
+  color: white;
+
+  & > a {
+    min-height: 40px;
+    margin: 0 16px 0px 16px;
+    text-decoration: none;
+    transition: filter ease-in-out 0.25s;
+
+    &:hover {
+      filter: brightness(400%);
+    }
+
+    & > h1 {
+      font-family: var(--poppins), sans-serif;
+      font-size: 26px;
+      line-height: 40px;
+      color: white;
+  
+      & > span:last-of-type {
+        color: transparent;
+        background: var(--logo-linear);
+        background-clip: text;
+      }
+    }
+  }
+
+  & > p {
+    font-family: var(--ntr), sans-serif;
+    min-height: 36px;
+    margin: 2px 16px 2px 16px;
+    line-height: 18px;
+    text-align: right;
+  }
+}
