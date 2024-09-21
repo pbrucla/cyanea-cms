@@ -21,6 +21,7 @@ import { commit, getFile, getHEAD, getTree } from "@/app/dashboard/utils/github"
 import * as storage from "@/app/dashboard/utils/storage"
 import { GitTreeFromGithub } from "@/app/dashboard/utils/storage"
 import styles from "@/app/styles/dashboard/DashboardClient.module.css"
+import type {} from "@/auth"
 
 export default function DashboardClient({
   session: { token },

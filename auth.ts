@@ -4,7 +4,7 @@ import github from "next-auth/providers/github"
 import { Octokit } from "octokit"
 import * as env from "@/env"
 
-declare module "@auth/core/types" {
+declare module "next-auth" {
   interface Session {
     token: string
   }

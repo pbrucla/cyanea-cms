@@ -9,6 +9,7 @@ import sneeze from "@/public/stega sneeze.svg"
 
 export default async function Home() {
   const session = await auth()
+  console.log("session", session)
 
   return (
     <main className={styles.main}>

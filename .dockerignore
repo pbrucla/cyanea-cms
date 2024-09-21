@@ -1,0 +1,10 @@
+.husky
+.next
+.vscode
+node_modules
+.editorconfig
+.env.local
+.eslintrc.json
+.gitignore
+.prettierrc.json
+README.md
