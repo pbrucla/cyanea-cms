@@ -1,4 +1,4 @@
-import { Button, createTheme } from "@mui/material"
+import { Button } from "@mui/material"
 import Image from "next/image"
 import Link from "next/link"
 import AuthErrorMessage from "@/app/components/AuthErrorMessage"
@@ -9,7 +9,6 @@ import sneeze from "@/public/stega sneeze.svg"
 
 export default async function Home() {
   const session = await auth()
-  console.log("session", session)
 
   return (
     <main className={styles.main}>
