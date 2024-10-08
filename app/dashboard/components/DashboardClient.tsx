@@ -23,6 +23,45 @@ import { GitTreeFromGithub } from "@/app/dashboard/utils/storage"
 import styles from "@/app/styles/dashboard/DashboardClient.module.css"
 import type {} from "@/auth"
 
+type BuildOutTree = Map<string, [string, BuildOutTree]>
+
+function assembleOutTree(build: BuildOutTree): TreeViewBaseItem[] {
+  const outTree: TreeViewBaseItem[] = []
+  build.forEach(([id, children], label) => {
+    const outNode: TreeViewBaseItem = { id, label }
+    if (children.size > 0) {
+      outNode.children = assembleOutTree(children)
+    }
+    outTree.push(outNode)
+  })
+  return outTree
+}
+
+// Flattens the Git tree data structure as returned by Github into
+// both:
+// - an easy-to-query map of {path -> file}, and
+// - the input list format for the MUI Tree Picker component
+function flattenTreeFromGithub(tree: GitTreeFromGithub[]) {
+  const files: Map<string, GitTreeFromGithub> = new Map()
+  const buildOutTree: BuildOutTree = new Map()
+  for (const node of tree) {
+    if (node.type === "blob") {
+      files.set(node.path!, node)
+      const pathParts = node.path!.split("/")
+      let parents = ""
+      let outNode = buildOutTree
+      for (const pathPart of pathParts) {
+        if (!outNode.has(pathPart)) {
+          outNode.set(pathPart, [parents + pathPart, new Map()])
+        }
+        parents += pathPart + "/"
+        outNode = outNode.get(pathPart)![1]
+      }
+    }
+  }
+  return [files, assembleOutTree(buildOutTree)] as const
+}
+
 export default function DashboardClient({
   session: { token },
 }: Readonly<{
@@ -33,6 +72,9 @@ export default function DashboardClient({
       new Octokit({
         authStrategy: createCallbackAuth,
         auth: { callback: () => token },
+        request: {
+          fetch: (url: string | URL | Request, options?: RequestInit) => fetch(url, { ...options, cache: "no-store" }),
+        },
       }),
     [token],
   )
@@ -56,12 +98,27 @@ export default function DashboardClient({
             }
           }}
           args={[octokit, repo] as const}
-          then={([[currentHeadRef, currentHead], [_, upstreamHead]]: readonly [[string, string], [string, string]]) => (
+          then={([[currentHeadRef, currentHead], [_, upstreamHead]]) => (
             <UseThen
               fallback={<Loading>fetching event repo tree...</Loading>}
-              use={storage.cache(storage.getLastTree, storage.setLastTree, getTree)}
-              args={[octokit, repo, currentHead]}
-              then={([sha, tree]: [string, GitTreeFromGithub[]]) => (
+              use={async (octokit, repo, currentHead) => {
+                const cached = storage.getLastTree()
+                if (cached != null) {
+                  // if we have zero modifications, pull from head
+                  const changes = storage.calculateNumChanges(flattenTreeFromGithub(cached[1])[0].keys())
+                  if (currentHead != upstreamHead && changes === 0) {
+                    storage.clearStorage()
+                    window.location.reload()
+                  } else {
+                    return cached
+                  }
+                }
+                const computed = await getTree(octokit, repo, currentHead)
+                storage.setLastTree(computed)
+                return computed
+              }}
+              args={[octokit, repo, currentHead] as const}
+              then={([sha, tree]) => (
                 <DashboardClientUI
                   octokit={octokit}
                   repo={repo}
@@ -97,38 +154,7 @@ function DashboardClientUI({
   treeSha: string
   tree: GitTreeFromGithub[]
 }>) {
-  const [files, treeForDisplay] = useMemo(() => {
-    type BuildOutTree = Map<string, [string, BuildOutTree]>
-    const files: Map<string, (typeof tree)[number]> = new Map()
-    const buildOutTree: BuildOutTree = new Map()
-    for (const node of tree) {
-      if (node.type === "blob") {
-        files.set(node.path!, node)
-        const pathParts = node.path!.split("/")
-        let parents = ""
-        let outNode = buildOutTree
-        for (const pathPart of pathParts) {
-          if (!outNode.has(pathPart)) {
-            outNode.set(pathPart, [parents + pathPart, new Map()])
-          }
-          parents += pathPart + "/"
-          outNode = outNode.get(pathPart)![1]
-        }
-      }
-    }
-    function assembleOutTree(build: BuildOutTree): TreeViewBaseItem[] {
-      const outTree: TreeViewBaseItem[] = []
-      build.forEach(([id, children], label) => {
-        const outNode: TreeViewBaseItem = { id, label }
-        if (children.size > 0) {
-          outNode.children = assembleOutTree(children)
-        }
-        outTree.push(outNode)
-      })
-      return outTree
-    }
-    return [files, assembleOutTree(buildOutTree)]
-  }, [tree])
+  const [files, treeForDisplay] = useMemo(() => flattenTreeFromGithub(tree), [tree])
 
   const setFileSideEffects = (f: string) => {
     let restOfHash = window.location.hash.substring(1).split("&").slice(1).join("&")
@@ -200,17 +226,17 @@ function DashboardClientUI({
               fetching <code>{file}</code>...
             </Loading>
           }
-          use={storage.cache(
-            () => storage.getStagedFile(file),
-            contents => {
-              if (contents !== null) {
-                storage.cacheFile(file, contents)
-              }
-            },
-            getFile,
-          )}
-          args={[octokit, repo, file]}
-          then={(contents: string | null) => (
+          use={async (octokit, repo, file) => {
+            const cached = storage.getStagedFile(file)
+            if (cached != null) return cached
+            const contents = await getFile(octokit, repo, file)
+            if (contents !== null) {
+              storage.cacheFile(file, contents)
+            }
+            return contents
+          }}
+          args={[octokit, repo, file] as const}
+          then={contents => (
             <DashboardClientEditor
               key={file}
               currentHead={currentHead}
@@ -314,23 +340,10 @@ function DashboardClientEditor({
     }
   }, [contents])
 
-  const calculateNumChanges = useMemo(
-    () => () => {
-      let newNumChanges = 0
-      files.forEach((_, f) => {
-        const staged = storage.getStagedFile(f)
-        if (staged !== null && staged != storage.getOriginalFile(f)) {
-          newNumChanges++
-        }
-      })
-      return newNumChanges
-    },
-    [files],
-  )
-  const [numChanges, setNumChanges] = useState(calculateNumChanges())
+  const [numChanges, setNumChanges] = useState(storage.calculateNumChanges(files.keys()))
   useEffect(() => {
-    setNumChanges(calculateNumChanges())
-  }, [calculateNumChanges, contents])
+    setNumChanges(storage.calculateNumChanges(files.keys()))
+  }, [files, contents])
 
   const [editorType, setEditorType] = useState(initialEditorType)
 

@@ -31,20 +31,6 @@ function withLocalStorage<Z extends z.ZodType<any, any, any>>(
   }
 }
 
-export function cache<T, A extends readonly unknown[]>(
-  get: () => T | null,
-  set: (value: T) => void,
-  init: (...args: A) => Promise<T>,
-) {
-  return async (...args: A) => {
-    const cached = get()
-    if (cached != null) return cached
-    const computed = await init(...args)
-    set(computed)
-    return computed
-  }
-}
-
 export const [getLastHEAD, setLastHEAD] = withLocalStorage("last-head", z.tuple([z.string(), z.string()]))
 
 export const [getLastTree, setLastTree] = withLocalStorage(
@@ -101,4 +87,15 @@ export function resetFileOrThrow(path: string) {
 
 export function clearStorage() {
   localStorage.clear()
+}
+
+export function calculateNumChanges(files: IterableIterator<string>) {
+  let newNumChanges = 0
+  for (const f of files) {
+    const staged = getStagedFile(f)
+    if (staged !== null && staged != getOriginalFile(f)) {
+      newNumChanges++
+    }
+  }
+  return newNumChanges
 }

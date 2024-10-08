@@ -1,3 +1,5 @@
+"use client"
+
 import { RepoAndOwner } from "@/app/actions"
 import { Octokit } from "octokit"
 import * as storage from "@/app/dashboard/utils/storage"
