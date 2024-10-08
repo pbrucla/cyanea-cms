@@ -127,10 +127,12 @@ export default function CyaneaTheme({
             ":root": {
               "--tree-drawer-breakpoint": treeDrawerBreakpoint,
               "--tree-drawer-display": "none",
+              "--responsive-editor-padding-right": "1",
             },
             [`@media screen and (max-width: ${treeDrawerBreakpoint}px)`]: {
               ":root": {
                 "--tree-drawer-display": "block",
+                "--responsive-editor-padding-right": "0",
               },
             },
           }}
