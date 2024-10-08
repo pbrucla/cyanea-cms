@@ -60,5 +60,5 @@ export const LINK_TYPES: Record<string, string> = {
 }
 
 export const METADATA_CHECKBOXES: Record<string, string> = {
-  "ignore-for-acm-newsletter": "do not push event to the big acm newsletter",
+  "ignore-for-acm-newsletter": "do not push to the big acm newsletter (only check this for ACM GM events)",
 }
