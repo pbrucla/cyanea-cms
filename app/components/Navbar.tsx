@@ -12,7 +12,7 @@ export default function Navbar() {
       <p>
         for internal use only!
         <br />
-        &copy; ACM Cyber 2024
+        &copy; ACM Cyber 2025
       </p>
     </nav>
   )
